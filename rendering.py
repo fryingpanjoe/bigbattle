@@ -442,6 +442,7 @@ class WorldRendering(object):
                 glPushMatrix()
                 glTranslatef(ent.x, .5 * size[1], ent.y)
                 glScalef(*size)
+                glRotatef(-ent.rotation * 180. / math.pi, 0., 1., 0.)
                 glDrawArrays(GL_TRIANGLES, 0, 36)
                 glPopMatrix()
         self.entity_shader.unbind()

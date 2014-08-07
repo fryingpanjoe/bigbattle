@@ -77,11 +77,15 @@ class Enemy(object):
 
 class PlayerActionFlags(object):
 
-    MOVE_UP     = 1 << 1
-    MOVE_DOWN   = 1 << 2
-    MOVE_LEFT   = 1 << 3
-    MOVE_RIGHT  = 1 << 4
-    ATTACK      = 1 << 5
+    MOVE_NORTH      = 1 << 1
+    MOVE_SOUTH      = 1 << 2
+    MOVE_WEST       = 1 << 3
+    MOVE_EAST       = 1 << 4
+    MOVE_FORWARD    = 1 << 5
+    MOVE_BACK       = 1 << 6
+    MOVE_LEFT       = 1 << 7
+    MOVE_RIGHT      = 1 << 8
+    ATTACK          = 1 << 9
 
 
 class Player(object):
@@ -96,11 +100,23 @@ class Player(object):
         else:
             self.action_flags &= ~flag
 
-    def move_up(self, on):
-        self.set_flag(PlayerActionFlags.MOVE_UP, on)
+    def move_north(self, on):
+        self.set_flag(PlayerActionFlags.MOVE_NORTH, on)
 
-    def move_down(self, on):
-        self.set_flag(PlayerActionFlags.MOVE_DOWN, on)
+    def move_south(self, on):
+        self.set_flag(PlayerActionFlags.MOVE_SOUTH, on)
+
+    def move_west(self, on):
+        self.set_flag(PlayerActionFlags.MOVE_WEST, on)
+
+    def move_east(self, on):
+        self.set_flag(PlayerActionFlags.MOVE_EAST, on)
+
+    def move_forward(self, on):
+        self.set_flag(PlayerActionFlags.MOVE_FORWARD, on)
+
+    def move_back(self, on):
+        self.set_flag(PlayerActionFlags.MOVE_BACK, on)
 
     def move_left(self, on):
         self.set_flag(PlayerActionFlags.MOVE_LEFT, on)
@@ -118,18 +134,30 @@ class Player(object):
         move_speed = SimulationConfig.PLAYER_MOVE_SPEED
         vel_x = 0.
         vel_y = 0.
-        if (self.action_flags & PlayerActionFlags.MOVE_UP) != 0:
+        if (self.action_flags & PlayerActionFlags.MOVE_NORTH) != 0:
             vel_x -= move_speed
             vel_y -= move_speed
-        if (self.action_flags & PlayerActionFlags.MOVE_DOWN) != 0:
+        if (self.action_flags & PlayerActionFlags.MOVE_SOUTH) != 0:
             vel_x += move_speed
             vel_y += move_speed
+        if (self.action_flags & PlayerActionFlags.MOVE_WEST) != 0:
+            vel_x -= move_speed
+            vel_y += move_speed
+        if (self.action_flags & PlayerActionFlags.MOVE_EAST) != 0:
+            vel_x += move_speed
+            vel_y -= move_speed
+        if (self.action_flags & PlayerActionFlags.MOVE_FORWARD) != 0:
+            vel_x += math.cos(self.entity.rotation) * move_speed
+            vel_y += math.sin(self.entity.rotation) * move_speed
+        if (self.action_flags & PlayerActionFlags.MOVE_BACK) != 0:
+            vel_x -= math.cos(self.entity.rotation) * move_speed
+            vel_y -= math.sin(self.entity.rotation) * move_speed
         if (self.action_flags & PlayerActionFlags.MOVE_LEFT) != 0:
-            vel_x -= move_speed
-            vel_y += move_speed
+            vel_x -= math.cos(self.entity.rotation + math.pi * .5) * move_speed
+            vel_y -= math.sin(self.entity.rotation + math.pi * .5) * move_speed
         if (self.action_flags & PlayerActionFlags.MOVE_RIGHT) != 0:
-            vel_x += move_speed
-            vel_y -= move_speed
+            vel_x += math.cos(self.entity.rotation + math.pi * .5) * move_speed
+            vel_y += math.sin(self.entity.rotation + math.pi * .5) * move_speed
         speed = math.sqrt(vel_x * vel_x + vel_y * vel_y)
         if speed:
             speed_fac = move_speed / math.sqrt(vel_x * vel_x + vel_y * vel_y)

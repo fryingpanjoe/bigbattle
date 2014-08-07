@@ -7,7 +7,7 @@ import select
 import sys
 import time
 import os
-import random
+import math
 
 import pyglet
 from pyglet.window import key
@@ -22,9 +22,6 @@ LOG = logging.getLogger(__name__)
 
 WINDOW_WIDTH = 1024
 WINDOW_HEIGHT = 768
-VERTICAL_FOV = 45
-CLIP_NEAR = 1
-CLIP_FAR = 8192
 
 
 class GameWindow(pyglet.window.Window):
@@ -43,7 +40,7 @@ class GameWindow(pyglet.window.Window):
         self.shader_cache = rendering.ShaderCache()
         self.world_rendering = rendering.WorldRendering(self.shader_cache)
         self.terrain_rendering = rendering.TerrainRendering(self.shader_cache)
-        self.terrain_size = 64
+        self.terrain_size = 256
         self.terrain_grid = terrain.generate_random_square_patch(
             self.terrain_size, [0,1])
         self.world_simulation = world.Simulation()
@@ -127,9 +124,9 @@ class GameWindow(pyglet.window.Window):
 
     def on_key(self, symbol, modifiers, pressed):
         if symbol == key.W:
-            self.player.move_up(pressed)
+            self.player.move_forward(pressed)
         elif symbol == key.S:
-            self.player.move_down(pressed)
+            self.player.move_back(pressed)
         elif symbol == key.A:
             self.player.move_left(pressed)
         elif symbol == key.D:
@@ -151,7 +148,11 @@ class GameWindow(pyglet.window.Window):
         pass
 
     def on_mouse_motion(self, x, y, dx, dy):
-        pass
+        width, height = self.get_size()
+        x = x - (width * .5)
+        y = y - (height * .5)
+        angle = -math.pi * .25 - math.atan2(y, x)
+        self.player.set_rotation(angle)
 
     def on_mouse_press(self, x, y, button, modifiers):
         pass
