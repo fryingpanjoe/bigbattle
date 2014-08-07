@@ -12,85 +12,111 @@ LOG = logging.getLogger(__name__)
 
 TILE_SIZE = 1.
 
-CUBE_QVERT_XYZ = [
+CUBE_VERT_XYZ = [
     # front
     -.5, -.5,  .5,
      .5, -.5,  .5,
      .5,  .5,  .5,
+     .5,  .5,  .5,
     -.5,  .5,  .5,
+    -.5, -.5,  .5,
 
     # back
     -.5, -.5, -.5,
     -.5,  .5, -.5,
      .5,  .5, -.5,
+     .5,  .5, -.5,
      .5, -.5, -.5,
+    -.5, -.5, -.5,
 
     # right
      .5, -.5, -.5,
      .5,  .5, -.5,
      .5,  .5,  .5,
+     .5,  .5,  .5,
      .5, -.5,  .5,
+     .5, -.5, -.5,
 
     # left
     -.5, -.5, -.5,
     -.5, -.5,  .5,
     -.5,  .5,  .5,
+    -.5,  .5,  .5,
     -.5,  .5, -.5,
+    -.5, -.5, -.5,
 
     # top
     -.5,  .5, -.5,
     -.5,  .5,  .5,
      .5,  .5,  .5,
+     .5,  .5,  .5,
      .5,  .5, -.5,
+    -.5,  .5, -.5,
 
     # bottom
     # XXX probably no need to draw bottom
     -.5, -.5, -.5,
      .5, -.5, -.5,
      .5, -.5,  .5,
+     .5, -.5,  .5,
     -.5, -.5,  .5,
+    -.5, -.5, -.5,
 ]
 
-CUBE_QVERT_UV = [
+CUBE_VERT_UV = [
     # front
     0., 0.,
     1., 0.,
     1., 1.,
+    1., 1.,
     0., 1.,
+    0., 0.,
 
     # back
     1., 0.,
     1., 1.,
     0., 1.,
+    0., 1.,
     0., 0.,
+    1., 0.,
 
     # right
     1., 0.,
     1., 1.,
     0., 1.,
+    0., 1.,
     0., 0.,
+    1., 0.,
 
     # left
     0., 0.,
     1., 0.,
     1., 1.,
+    1., 1.,
     0., 1.,
+    0., 0.,
 
     # top
     0., 1.,
     0., 0.,
     1., 0.,
+    1., 0.,
     1., 1.,
+    0., 1.,
 
     # bottom
     1., 1.,
     0., 1.,
     0., 0.,
+    0., 0.,
     1., 0.,
+    1., 1.,
 ]
 
-CUBE_QVERT_NORM = [
+CUBE_VERT_NORM = [
     # front
+     0.,  0.,  .1,
+     0.,  0.,  .1,
      0.,  0.,  .1,
      0.,  0.,  .1,
      0.,  0.,  .1,
@@ -101,8 +127,12 @@ CUBE_QVERT_NORM = [
      0.,  0., -.1,
      0.,  0., -.1,
      0.,  0., -.1,
+     0.,  0., -.1,
+     0.,  0., -.1,
 
     # right
+     1.,  0.,  0.,
+     1.,  0.,  0.,
      1.,  0.,  0.,
      1.,  0.,  0.,
      1.,  0.,  0.,
@@ -113,14 +143,20 @@ CUBE_QVERT_NORM = [
     -1.,  0.,  0.,
     -1.,  0.,  0.,
     -1.,  0.,  0.,
+    -1.,  0.,  0.,
+    -1.,  0.,  0.,
 
     # top
      0.,  1.,  0.,
      0.,  1.,  0.,
      0.,  1.,  0.,
      0.,  1.,  0.,
+     0.,  1.,  0.,
+     0.,  1.,  0.,
 
     # bottom
+     0., -1.,  0.,
+     0., -1.,  0.,
      0., -1.,  0.,
      0., -1.,  0.,
      0., -1.,  0.,
@@ -264,9 +300,9 @@ class ShaderCache(object):
 #    glScalef(width, height, depth)
 #    pyglet.graphics.draw(
 #        24, pyglet.gl.GL_QUADS,
-#        ('v3f', CUBE_QVERT_XYZ),
-#        ('t2f', CUBE_QVERT_UV),
-#        ('n3f', CUBE_QVERT_NORM))
+#        ('v3f', CUBE_VERT_XYZ),
+#        ('t2f', CUBE_VERT_UV),
+#        ('n3f', CUBE_VERT_NORM))
 #    glPopMatrix()
 
 
@@ -361,21 +397,21 @@ class WorldRendering(object):
 
     def __init__(self, shader_cache):
         self.cube_vlist = vertex_list = pyglet.graphics.vertex_list(
-            24,
-            ('v3f', CUBE_QVERT_XYZ),
-            ('t2f', CUBE_QVERT_UV),
-            ('n3f', CUBE_QVERT_NORM))
+            36,
+            ('v3f', CUBE_VERT_XYZ),
+            ('t2f', CUBE_VERT_UV),
+            ('n3f', CUBE_VERT_NORM))
         self.pyramid_vlist = vertex_list = pyglet.graphics.vertex_list(
             18,
             ('v3f', PYRAMID_VERT_XYZ),
             ('t2f', PYRAMID_VERT_UV),
             ('n3f', PYRAMID_VERT_NORM))
-        #self.qcube_vbo = create_static_interleaved_vbo(
-        #    CUBE_QVERT_XYZ, CUBE_QVERT_UV, CUBE_QVERT_NORM)
+        #self.cube_vbo = create_static_interleaved_vbo(
+        #    CUBE_VERT_XYZ, CUBE_VERT_UV, CUBE_VERT_NORM)
         #self.pyramid_vbo = create_static_interleaved_vbo(
         #    PYRAMID_VERT_XYZ, PYRAMID_VERT_UV, PYRAMID_VERT_NORM)
-        self.qcube_vbo = InterleavedStaticVBO(
-            CUBE_QVERT_XYZ, CUBE_QVERT_UV, CUBE_QVERT_NORM)
+        self.cube_vbo = InterleavedStaticVBO(
+            CUBE_VERT_XYZ, CUBE_VERT_UV, CUBE_VERT_NORM)
         self.pyramid_vbo = InterleavedStaticVBO(
             PYRAMID_VERT_XYZ, PYRAMID_VERT_UV, PYRAMID_VERT_NORM)
 
@@ -393,8 +429,8 @@ class WorldRendering(object):
 
     def draw_entities(self, ents):
         glEnable(GL_TEXTURE_2D)
-        self.qcube_vbo.enable_state()
-        self.qcube_vbo.bind()
+        self.cube_vbo.enable_state()
+        self.cube_vbo.bind()
         self.entity_shader.bind()
         for ent in ents:
             model = self.entity_models.get(ent.draw_model)
@@ -405,19 +441,19 @@ class WorldRendering(object):
                 glPushMatrix()
                 glTranslatef(ent.x, .5 * size[1], ent.y)
                 glScalef(*size)
-                glDrawArrays(GL_QUADS, 0, 24)
+                glDrawArrays(GL_TRIANGLES, 0, 36)
                 glPopMatrix()
         self.entity_shader.unbind()
-        self.qcube_vbo.unbind()
-        self.qcube_vbo.disable_state()
+        self.cube_vbo.unbind()
+        self.cube_vbo.disable_state()
         glDisable(GL_TEXTURE_2D)
 
     def draw_terrain_patch(self, wx, wy, tiles, width, height):
         x = 0
         y = 0
         glEnable(GL_TEXTURE_2D)
-        self.qcube_vbo.enable_state()
-        self.qcube_vbo.bind()
+        self.cube_vbo.enable_state()
+        self.cube_vbo.bind()
         self.terrain_shader.bind()
         for tile in tiles:
             glBindTexture(
@@ -437,7 +473,7 @@ class WorldRendering(object):
         self._draw_pyramid(2 + wx + width / 3., 1., wy + height / 3., .25, .5, .25)
         self._draw_pyramid(2 + wx + width / 3., 1.25, wy + height / 3., .125, .25, .125)
         self.terrain_shader.unbind()
-        self.qcube_vbo.disable_state()
+        self.cube_vbo.disable_state()
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glDisable(GL_TEXTURE_2D)
 
@@ -452,6 +488,6 @@ class WorldRendering(object):
     def _draw_cube(self, x, y, z):
         glPushMatrix()
         glTranslatef(x, y, z)
-        glDrawArrays(GL_QUADS, 0, 24)
+        glDrawArrays(GL_TRIANGLES, 0, 36)
         #self.cube_vlist.draw(GL_QUADS)
         glPopMatrix()
