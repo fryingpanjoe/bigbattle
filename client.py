@@ -42,12 +42,13 @@ class GameWindow(pyglet.window.Window):
         # XXX move to somewhere else!
         self.shader_cache = rendering.ShaderCache()
         self.world_rendering = rendering.WorldRendering(self.shader_cache)
-        self.terrain_size = 32
+        self.terrain_rendering = rendering.TerrainRendering(self.shader_cache)
+        self.terrain_size = 64
         self.terrain_grid = terrain.generate_random_square_patch(
             self.terrain_size, [0,1])
         self.world_simulation = world.Simulation()
         self.camera = rendering.IsometricCamera(
-            x=self.terrain_size * .5, y=self.terrain_size * .5, dist=1., scale=8.)
+            x=self.terrain_size * .5, y=self.terrain_size * .5, scale=6.)
         self.player_ent = self.world_simulation.spawn_entity(
             self.terrain_size * .5, self.terrain_size * .5)
         self.player = world.Player(self.player_ent)
@@ -95,11 +96,18 @@ class GameWindow(pyglet.window.Window):
         glFrontFace(GL_CCW)
         glLightfv(GL_LIGHT0, GL_POSITION, (GLfloat * 4)(.2, 1., -.2, 0.))
 
-        self.world_rendering.draw_terrain_patch(
-            0., 0.,
+        self.terrain_rendering.draw_terrain(
+            self.camera.x,
+            self.camera.y,
+            self.camera.scale,
             self.terrain_grid,
             self.terrain_size,
             self.terrain_size)
+        #self.world_rendering.draw_terrain_patch(
+        #    0., 0.,
+        #    self.terrain_grid,
+        #    self.terrain_size,
+        #    self.terrain_size)
         self.world_rendering.draw_entities(self.world_simulation.entities)
 
         # hud drawing

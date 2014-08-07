@@ -1,6 +1,7 @@
 # Copyright (c) 2014 Per Lindstrand
 
 import logging
+import math
 import json
 
 import pyglet
@@ -11,6 +12,7 @@ import shader
 LOG = logging.getLogger(__name__)
 
 TILE_SIZE = 1.
+TILE_DIAG_SIZE = math.sqrt(2. * (TILE_SIZE * TILE_SIZE))
 
 CUBE_VERT_XYZ = [
     # front
@@ -253,11 +255,10 @@ PYRAMID_VERT_NORM = calc_pyramid_norms(PYRAMID_VERT_XYZ)
 
 class IsometricCamera(object):
 
-    def __init__(self, x=0., y=0., dist=1., scale=10.):
+    def __init__(self, x=0., y=0., scale=10.):
         self.x = x
         self.y = y
         self.scale = scale
-        self.dist = dist
 
     def setup(self, width, height):
         glMatrixMode(GL_PROJECTION);
@@ -269,7 +270,7 @@ class IsometricCamera(object):
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         gluLookAt(
-            self.x + self.dist, self.dist, self.y + self.dist,
+            self.x + .75, 1., self.y + .75,
             self.x, 0., self.y,
             0., 1., 0.);
 
@@ -491,3 +492,60 @@ class WorldRendering(object):
         glDrawArrays(GL_TRIANGLES, 0, 36)
         #self.cube_vlist.draw(GL_QUADS)
         glPopMatrix()
+
+
+def rot_45((x, y)):
+    sqrt_2_over_two = math.sqrt(2.) * .5
+    return ((x + y) / sqrt_2_over_two, (y - x) / sqrt_2_over_two)
+
+
+class TerrainRendering(object):
+
+    def __init__(self, shader_cache):
+        self.shader = shader_cache.load_shader('terrain.vp', 'terrain.fp')
+        #self.atlas = load_texture_image('terrain_atlas.png')
+        #self.vbo = None
+        self.vbo = InterleavedStaticVBO(
+            CUBE_VERT_XYZ, CUBE_VERT_UV, CUBE_VERT_NORM)
+        self.textures = [
+            load_texture_image(fname)
+            for fname in json.loads(read_file('terrain_textures.json'))]
+
+    def draw_terrain(self, cam_x, cam_y, d, tiles, width, height):
+        # assumes 45 degree isometric camera
+        tile_bl = rot_45((-d,  2. * math.sqrt(2.) * d))
+        tile_br = rot_45(( d,  2. * math.sqrt(2.) * d))
+        tile_tl = rot_45((-d, -2. * math.sqrt(2.) * d))
+        tile_tr = rot_45(( d, -2. * math.sqrt(2.) * d))
+
+        tile_min_x = max(0, int((cam_x + tile_tl[0] - .5) / TILE_SIZE))
+        tile_max_x = min(width, int((cam_x + tile_br[0] + .5) / TILE_SIZE))
+        tile_min_y = max(0, int((cam_y + tile_tr[1] - .5) / TILE_SIZE))
+        tile_max_y = min(height, int((cam_y + tile_bl[1] + .5) / TILE_SIZE))
+
+        min_x = -2. * d - 2. * TILE_SIZE
+        max_x =  2. * d + 2. * TILE_SIZE
+        min_y = -2. * math.sqrt(2.) * d - 2. * TILE_SIZE
+        max_y =  2. * math.sqrt(2.) * d + 2. * TILE_SIZE
+
+        glEnable(GL_TEXTURE_2D)
+        self.vbo.enable_state()
+        self.vbo.bind()
+        self.shader.bind()
+        for y in range(tile_min_y, tile_max_y):
+            for x in range(tile_min_x, tile_max_x):
+                rot_tile = rot_45(((y - cam_y), -(x - cam_x)))
+                if (rot_tile[0] < min_x or rot_tile[0] > max_x or
+                    rot_tile[1] < min_y or rot_tile[1] > max_y):
+                    continue
+                glBindTexture(
+                    GL_TEXTURE_2D,
+                    self.textures[tiles[x + y * width]].get_texture().id)
+                glPushMatrix()
+                glTranslatef(x, -.5, y)
+                glDrawArrays(GL_TRIANGLES, 0, 36)
+                glPopMatrix()
+        self.shader.unbind()
+        self.vbo.disable_state()
+        glBindBuffer(GL_ARRAY_BUFFER, 0)
+        glDisable(GL_TEXTURE_2D)
