@@ -1,0 +1,11 @@
+// Copyright (c) 2014 Per Lindstrand
+
+varying float shade;
+
+void main()
+{
+    vec3 normal = gl_NormalMatrix * gl_Normal;
+    shade = max(min(1, 0.6 + dot(gl_LightSource[0].position.xyz, normalize(normal))), 0.0);
+    gl_TexCoord[0] = gl_MultiTexCoord0;
+    gl_Position = ftransform();
+}
