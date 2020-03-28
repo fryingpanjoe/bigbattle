@@ -11,17 +11,17 @@ COMPRESSION_LEVEL = 1
 
 
 def compress_data(data):
-    return zlib.compress(data, COMPRESSION_LEVEL)
+    return zlib.compress(data.encode('ascii'), COMPRESSION_LEVEL)
 
 
 def decompress_data(data):
-    return zlib.decompress(data)
+    return str(zlib.decompress(data))
 
 
 class WriteBuffer(object):
 
     def __init__(self, max_size=None):
-        self.buffer = ''
+        self.buffer = b''
         self.max_size = max_size
 
     def get_data(self):
@@ -79,7 +79,7 @@ class ReadBuffer(object):
         if data:
             self.buffer = data
         else:
-            self.buffer = ''
+            self.buffer = b''
 
     def get_data(self):
         return self.buffer

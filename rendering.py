@@ -290,8 +290,8 @@ class ShaderCache(object):
         program = self.terrain_shaders.get(key)
         if not program:
             program = shader.Shader(
-                vert=[read_file(vert_fname)],
-                frag=[read_file(frag_fname)])
+                vertex_shader_source=read_file(vert_fname),
+                fragment_shader_source=read_file(frag_fname))
         return program
 
 
@@ -344,7 +344,7 @@ class InterleavedStaticVBO(object):
 
     def __init__(self, xyz, uvs, norms):
         data = []
-        count = len(xyz) / 3
+        count = len(xyz) // 3
         xyz_it = iter(xyz)
         uv_it = iter(uvs)
         norm_it = iter(norms)
@@ -419,7 +419,7 @@ class WorldRendering(object):
         self.entity_shader = shader_cache.load_shader(
             'entity.vp', 'entity.fp')
         self.entity_models = json.loads(read_file('entity_models.json'))
-        for model in self.entity_models.itervalues():
+        for model in iter(self.entity_models.values()):
             model['texture'] = load_texture_image(model['texture'])
 
         self.terrain_shader = shader_cache.load_shader(
@@ -495,7 +495,9 @@ class WorldRendering(object):
         glPopMatrix()
 
 
-def rot_45((x, y)):
+def rot_45(v):
+    x = v[0]
+    y = v[1]
     sqrt_2_over_two = math.sqrt(2.) * .5
     return ((x + y) / sqrt_2_over_two, (y - x) / sqrt_2_over_two)
 

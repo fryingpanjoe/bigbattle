@@ -31,7 +31,6 @@ class GameWindow(pyglet.window.Window):
         self.active = False
         self.start_time = time.time()
         self.last_update = time.time()
-        self.fps_display = pyglet.clock.ClockDisplay()
         # networking
         self.sock = None
         self.chan = None
@@ -118,9 +117,6 @@ class GameWindow(pyglet.window.Window):
         glDisable(GL_LIGHT0)
         # ...
         #ui_renderer.draw(window_width, window_height)
-
-        # draw fps
-        self.fps_display.draw()
 
     def on_key(self, symbol, modifiers, pressed):
         if symbol == key.W:
@@ -210,15 +206,12 @@ class GameWindow(pyglet.window.Window):
         self.chan.send_packet('hello from %s' % socket.getfqdn())
 
     def handle_packet(self, packet):
-        print 'got', packet
+        print('got', packet)
 
 
 def main():
     logging.config.fileConfig('logging.conf', disable_existing_loggers=False)
 
-    pyglet_platform = pyglet.window.get_platform()
-    pyglet_display = pyglet_platform.get_default_display()
-    pyglet_screen = pyglet_display.get_default_screen()
     pyglet_gl_config_template = pyglet.gl.Config(
         alpha_size=8,
         depth_size=24,

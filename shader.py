@@ -6,90 +6,59 @@
 #
 
 from pyglet.gl import *
+from ctypes import create_string_buffer, cast, pointer, POINTER, c_char, c_int, byref
+
+
+def compile_shader(shader_type, shader_source):
+    shader_name = glCreateShader(shader_type)
+    src_buffer = create_string_buffer(shader_source.encode('utf-8'))
+    buf_pointer = cast(pointer(pointer(src_buffer)), POINTER(POINTER(c_char)))
+    length = c_int(len(shader_source) + 1)
+    glShaderSource(shader_name, 1, buf_pointer, byref(length))
+    glCompileShader(shader_name)
+
+    compile_status = c_int(0)
+    glGetShaderiv(shader_name, GL_COMPILE_STATUS, byref(compile_status))
+
+    if not compile_status:
+        info_log_length = c_int(0)
+        glGetShaderiv(shader_name, GL_INFO_LOG_LENGTH, byref(info_log_length))
+
+        compilation_log = create_string_buffer(info_log_length.value)
+        glGetShaderInfoLog(shader_name, info_log_length, None, compilation_log)
+
+        print(compilation_log.value)
+        raise RuntimeError('shader compilation error: ' + compilation_log.value)
+
+    return shader_name
+
 
 class Shader(object):
-    # vert, frag and geom take arrays of source strings
-    # the arrays will be concattenated into one string by OpenGL
-    def __init__(self, vert = [], frag = [], geom = []):
-        # create the program handle
+    def __init__(self, vertex_shader_source = '', fragment_shader_source = ''):
         self.handle = glCreateProgram()
-        # we are not linked yet
-        self.linked = False
 
-        # create the vertex shader
-        self.createShader(vert, GL_VERTEX_SHADER)
-        # create the fragment shader
-        self.createShader(frag, GL_FRAGMENT_SHADER)
-        # the geometry shader will be the same, once pyglet supports the extension
-        # self.createShader(frag, GL_GEOMETRY_SHADER_EXT)
+        glAttachShader(self.handle, compile_shader(GL_VERTEX_SHADER, vertex_shader_source))
+        glAttachShader(self.handle, compile_shader(GL_FRAGMENT_SHADER, fragment_shader_source))
 
-        # attempt to link the program
-        self.link()
-
-    def createShader(self, strings, type):
-        count = len(strings)
-        # if we have no source code, ignore this shader
-        if count < 1:
-            return
-
-        # create the shader handle
-        shader = glCreateShader(type)
-
-        # convert the source strings into a ctypes pointer-to-char array, and upload them
-        # this is deep, dark, dangerous black magick - don't try stuff like this at home!
-        src = (c_char_p * count)(*strings)
-        glShaderSource(shader, count, cast(pointer(src), POINTER(POINTER(c_char))), None)
-
-        # compile the shader
-        glCompileShader(shader)
-
-        temp = c_int(0)
-        # retrieve the compile status
-        glGetShaderiv(shader, GL_COMPILE_STATUS, byref(temp))
-
-        # if compilation failed, print the log
-        if not temp:
-            # retrieve the log length
-            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, byref(temp))
-            # create a buffer for the log
-            buffer = create_string_buffer(temp.value)
-            # retrieve the log text
-            glGetShaderInfoLog(shader, temp, None, buffer)
-            # print the log to the console
-            print buffer.value
-        else:
-            # all is well, so attach the shader to the program
-            glAttachShader(self.handle, shader);
-
-    def link(self):
-        # link the program
         glLinkProgram(self.handle)
 
-        temp = c_int(0)
-        # retrieve the link status
-        glGetProgramiv(self.handle, GL_LINK_STATUS, byref(temp))
+        link_status = c_int(0)
+        glGetProgramiv(self.handle, GL_LINK_STATUS, byref(link_status))
 
-        # if linking failed, print the log
-        if not temp:
-            #   retrieve the log length
-            glGetProgramiv(self.handle, GL_INFO_LOG_LENGTH, byref(temp))
-            # create a buffer for the log
-            buffer = create_string_buffer(temp.value)
-            # retrieve the log text
-            glGetProgramInfoLog(self.handle, temp, None, buffer)
-            # print the log to the console
-            print buffer.value
-        else:
-            # all is well, so we are linked
-            self.linked = True
+        if not link_status:
+            info_log_length = c_int(0)
+            glGetProgramiv(self.handle, GL_INFO_LOG_LENGTH, byref(info_log_length))
+
+            link_log = create_string_buffer(info_log_length.value)
+            glGetProgramInfoLog(self.handle, info_log_length, None, link_log)
+
+            print(link_log.value)
+            raise RuntimeError('shader link error: ' + link_log.value)
 
     def bind(self):
-        # bind the program
         glUseProgram(self.handle)
 
     def unbind(self):
-        # unbind whatever program is currently bound - not necessarily this program,
-        # so this should probably be a class method instead
         glUseProgram(0)
 
     # upload a floating point uniform
